@@ -1,101 +1,111 @@
-import styled from "styled-components";
-import { useRef, useState } from "react";
-import axios from "axios";
+import styled from 'styled-components';
+import { useRef, useState } from 'react';
+import axios from 'axios';
 
 const AppStyle = styled.div`
-  padding: 100px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+	padding: 100px;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
 `;
 
-const ws = new WebSocket(
-  "ws://ec2-3-34-49-72.ap-northeast-2.compute.amazonaws.com:8080/ws/chat"
-);
+//real
+// const ws = new WebSocket(
+// 	'ws://ec2-3-34-49-72.ap-northeast-2.compute.amazonaws.com:8080/ws/chat',
+// );
+
+//test-local
+const ws = new WebSocket('ws://localhost:8001');
 
 function App() {
-  const [nickname, setNickname] = useState("");
-  const [message, setMessage] = useState("");
-  const [roomId, setRoomId] = useState("");
+	const [nickname, setNickname] = useState('');
+	const [message, setMessage] = useState('');
+	const [roomId, setRoomId] = useState('');
 
-  const divRef = useRef();
+	const divRef = useRef();
 
-  const createdRoom = async () => {
-    console.log("방 생성");
+	const createdRoom = async () => {
+		console.log('방 생성');
 
-    const res = await axios.post("/chat?name=yujinroom");
+		//real
+		// const res = await axios.post('/chat?name=yujinroom');
 
-    console.log("방 아이디", res.data.roomId);
-    // {
-    //   roomId: '',
-    //   name: 'yujinroom',
-    //   sessions: []
-    // }
+		//test-local : json server
+		// cd data
+		// json-server --watch data.json --port 3001
+		const res = await axios.get('http://localhost:3001/data');
 
-    setRoomId(res.data.roomId);
-  };
+		console.log('방 아이디', res.data.roomId);
+		// {
+		//   roomId: '',
+		//   name: 'yujinroom',
+		//   sessions: []
+		// }
 
-  const enteredRoom = () => {
-    console.log("방 접속");
+		setRoomId(res.data.roomId);
+	};
 
-    const data = {
-      type: "ENTER",
-      roomId: 1,
-      sender: nickname,
-      message: "",
-    };
+	const enteredRoom = () => {
+		console.log('방 접속');
 
-    console.log("접속 데이터", data);
+		const data = {
+			type: 'ENTER',
+			roomId: roomId,
+			sender: nickname,
+			message: '',
+		};
 
-    ws.send(JSON.stringify(data));
-  };
+		console.log('접속 데이터', data);
 
-  // 메세지 전송
-  function sendMessage() {
-    console.log("메세지 전송");
+		ws.send(JSON.stringify(data));
+	};
 
-    const data = {
-      type: "TALK",
-      roomId: 1,
-      sender: nickname,
-      message: message,
-    };
+	// 메세지 전송
+	function sendMessage() {
+		console.log('메세지 전송');
 
-    console.log("전송 데이터", data);
+		const data = {
+			type: 'TALK',
+			roomId: 1,
+			sender: nickname,
+			message: message,
+		};
 
-    ws.send(JSON.stringify(data));
-  }
+		console.log('전송 데이터', data);
 
-  // 메세지 수신
-  function receiveMessage(event) {
-    const chat = document.createElement("div");
-    const message = document.createTextNode(event.data);
-    chat.appendChild(message);
-    divRef.current.appendChild(chat);
-  }
+		ws.send(JSON.stringify(data));
+	}
 
-  ws.onmessage = receiveMessage;
+	// 메세지 수신
+	function receiveMessage(event) {
+		const chat = document.createElement('div');
+		const message = document.createTextNode(event.data);
+		chat.appendChild(message);
+		divRef.current.appendChild(chat);
+	}
 
-  return (
-    <AppStyle>
-      <h1>Hudi Chat</h1>
-      <button onClick={createdRoom}>방 생성</button>
-      <button onClick={enteredRoom}>방 접속</button>
-      <div>
-        <input
-          placeholder="닉네임"
-          onChange={(e) => setNickname(e.target.value)}
-        />
-        <input
-          placeholder="메세지"
-          onChange={(e) => setMessage(e.target.value)}
-        />
-        <button onClick={sendMessage}>전송</button>
-      </div>
+	ws.onmessage = receiveMessage;
 
-      <div ref={divRef}></div>
-    </AppStyle>
-  );
+	return (
+		<AppStyle>
+			<h1>Hudi Chat</h1>
+			<button onClick={createdRoom}>방 생성</button>
+			<button onClick={enteredRoom}>방 접속</button>
+			<div>
+				<input
+					placeholder="닉네임"
+					onChange={(e) => setNickname(e.target.value)}
+				/>
+				<input
+					placeholder="메세지"
+					onChange={(e) => setMessage(e.target.value)}
+				/>
+				<button onClick={sendMessage}>전송</button>
+			</div>
+
+			<div ref={divRef}></div>
+		</AppStyle>
+	);
 }
 
 export default App;
