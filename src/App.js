@@ -10,12 +10,12 @@ const AppStyle = styled.div`
 `;
 
 //real
-// const ws = new WebSocket(
-// 	'ws://ec2-3-34-49-72.ap-northeast-2.compute.amazonaws.com:8080/ws/chat',
-// );
+const ws = new WebSocket(
+	'ws://ec2-3-34-49-72.ap-northeast-2.compute.amazonaws.com:8080/ws/chat',
+);
 
 //test-local
-const ws = new WebSocket('ws://localhost:8001');
+// const ws = new WebSocket('ws://localhost:8001');
 
 function App() {
 	const [nickname, setNickname] = useState('');
@@ -28,12 +28,12 @@ function App() {
 		console.log('방 생성');
 
 		//real
-		// const res = await axios.post('/chat?name=yujinroom');
+		const res = await axios.post('/chat?name=yujinroom');
 
 		//test-local : json server
-		// cd data
-		// json-server --watch data.json --port 3001
-		const res = await axios.get('http://localhost:3001/data');
+		// 1. cd data
+		// 2. json-server --watch data.json --port 3001
+		// const res = await axios.get('http://localhost:3001/data');
 
 		console.log('방 아이디', res.data.roomId);
 		// {
