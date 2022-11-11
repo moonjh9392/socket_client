@@ -1,6 +1,7 @@
 import styled from 'styled-components';
 import { useRef, useState } from 'react';
 import axios from 'axios';
+import YouTube from 'react-youtube';
 
 const AppStyle = styled.div`
 	padding: 100px;
@@ -10,14 +11,15 @@ const AppStyle = styled.div`
 `;
 
 //real
-const ws = new WebSocket(
-	'ws://ec2-3-34-49-72.ap-northeast-2.compute.amazonaws.com:8080/ws/chat',
-);
+// const ws = new WebSocket(
+// 	'ws://ec2-3-34-49-72.ap-northeast-2.compute.amazonaws.com:8080/ws/chat',
+// );
 
 //test-local
-// const ws = new WebSocket('ws://localhost:8001');
+const ws = new WebSocket('ws://localhost:8001');
 
 function App() {
+	const [player, setPlayer] = useState();
 	const [nickname, setNickname] = useState('');
 	const [message, setMessage] = useState('');
 	const [roomId, setRoomId] = useState('');
@@ -78,14 +80,37 @@ function App() {
 
 	// 메세지 수신
 	function receiveMessage(event) {
-		const chat = document.createElement('div');
-		const message = document.createTextNode(event.data);
-		chat.appendChild(message);
-		divRef.current.appendChild(chat);
+		if (!event.data.includes('새')) {
+			const data = JSON.parse(event.data);
+			player.seekTo(data.time, false);
+			player.playVideo();
+		}
 	}
 
 	ws.onmessage = receiveMessage;
 
+	const opts = {
+		height: '390',
+		width: '640',
+		playerVars: {
+			// https://developers.google.com/youtube/player_parameters
+			autoplay: 1,
+		},
+	};
+
+	const onReady = (event) => {
+		// access to player in all event handlers via event.target
+		setPlayer(event.target);
+		event.target.playVideo();
+	};
+
+	const ytref = useRef();
+
+	const onPlayerStateChange = (e) => {
+		const data = { type: 'time', time: e.target.getCurrentTime() };
+
+		ws.send(JSON.stringify(data));
+	};
 	return (
 		<AppStyle>
 			<h1>Hudi Chat</h1>
@@ -101,6 +126,14 @@ function App() {
 					onChange={(e) => setMessage(e.target.value)}
 				/>
 				<button onClick={sendMessage}>전송</button>
+				<button onClick={sendMessage}>시간</button>
+				<YouTube
+					ref={ytref}
+					videoId="qEVUtrk8_B4"
+					opts={opts}
+					onReady={onReady}
+					onStateChange={onPlayerStateChange}
+				/>
 			</div>
 
 			<div ref={divRef}></div>
